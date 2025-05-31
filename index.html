@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>মাল্টি-অ্যাপ</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f0f2f5;
+            color: #1c1e21;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            padding-top: 20px;
+            padding-bottom: 20px; /* Ensure space at bottom */
+        }
+
+        .app-shell {
+            width: 100%;
+            max-width: 800px;
+            background-color: #ffffff;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            overflow: hidden;
+            padding-bottom: 10px; /* Added padding for potential ad space */
+        }
+
+        .app-header {
+            background-color: #007bff;
+            color: white;
+            padding: 15px 20px;
+            text-align: center;
+            font-size: 1.5em;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+        .app-header button.back-to-home {
+            float: left;
+            background-color: #0056b3;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.8em;
+        }
+        .app-header button.back-to-home:hover {
+            background-color: #004085;
+        }
+
+        .page {
+            display: none;
+            padding: 20px;
+            animation: fadeIn 0.5s;
+        }
+
+        .page.active-page {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        #homePage h2 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+        }
+        .app-launcher {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        .app-launcher button {
+            background-color: #007bff;
+            color: white;
+            padding: 15px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1.1em;
+            text-align: center;
+            transition: background-color 0.3s ease;
+        }
+        .app-launcher button:hover {
+            background-color: #0056b3;
+        }
+
+        input[type="text"],
+        textarea {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 12px;
+            margin-bottom: 15px;
+            border: 1px solid #ced4da;
+            border-radius: 6px;
+            font-size: 16px;
+        }
+        input[type="text"]:focus,
+        textarea:focus {
+            border-color: #80bdff;
+            outline: 0;
+            box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25);
+        }
+        textarea { min-height: 100px; resize: vertical; }
+
+        .button-group { display: flex; gap: 10px; margin-bottom: 20px; }
+        .button-group button { flex-grow: 1; }
+        button {
+            color: white; padding: 10px 15px; border: none; border-radius: 6px;
+            cursor: pointer; font-size: 1em; transition: background-color 0.2s ease;
+        }
+        button.primary-btn { background-color: #007bff; }
+        button.primary-btn:hover { background-color: #0056b3; }
+        button.secondary-btn { background-color: #6c757d; }
+        button.secondary-btn:hover { background-color: #5a6268; }
+        button.danger-btn { background-color: #dc3545; }
+        button.danger-btn:hover { background-color: #c82333; }
+        button.warning-btn { background-color: #ffc107; color: #212529; }
+        button.warning-btn:hover { background-color: #e0a800; }
+
+        #notepadPage h3 { margin-top: 0; color: #007bff; }
+        .note-item {
+            background-color: #e9ecef; padding: 15px; border-radius: 6px;
+            margin-bottom: 12px; border-left: 5px solid #007bff; position: relative;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .note-item .note-title { margin-top: 0; margin-bottom: 8px; color: #0056b3; font-size: 1.1rem; font-weight: 600;}
+        .note-item .note-content { margin: 0 0 10px 0; white-space: pre-wrap; word-wrap: break-word; color: #333; }
+        .note-item .timestamp { font-size: 0.8em; color: #6c757d; display: block; margin-bottom: 10px; }
+        .note-actions button { font-size: 0.9em; padding: 5px 10px; margin-right: 5px;}
+        .empty-message, .no-results-message { text-align: center; color: #6c757d; font-style: italic; padding: 15px 0;}
+
+        #calendarPage h3 { text-align: center; color: #007bff; margin-bottom: 15px; }
+        .calendar-controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .calendar-controls button { background-color: #007bff; padding: 8px 12px; font-size: 0.9em; }
+        #calendarTable { width: 100%; border-collapse: collapse; table-layout: fixed; }
+        #calendarTable th, #calendarTable td {
+            border: 1px solid #ddd; padding: 10px; text-align: center; font-size: 0.9em;
+            height: 40px;
+        }
+        #calendarTable th { background-color: #f0f0f0; color: #333; font-weight: 600;}
+        #calendarTable td.today { background-color: #007bff; color: white; font-weight: bold; border-radius: 4px; }
+        #calendarTable td.empty { background-color: #f9f9f9; }
+
+        #calculatorPage .calculator {
+            width: 100%;
+            max-width: 320px;
+            margin: 20px auto;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            padding: 15px;
+            background-color: #e9ecef;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        #calculatorDisplay {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 15px;
+            font-size: 2em;
+            text-align: right;
+            border: 1px solid #bbb;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            background-color: #fdfdfd;
+            color: #333;
+            overflow-x: auto;
+            white-space: nowrap;
+        }
+        .calc-buttons { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+        .calc-buttons button {
+            padding: 18px;
+            font-size: 1.2em;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+            background-color: #f8f9fa;
+            color: #333;
+        }
+        .calc-buttons button:hover { background-color: #e2e6ea; }
+        .calc-buttons button.operator { background-color: #ffc107; color: #212529;}
+        .calc-buttons button.operator:hover { background-color: #e0a800; }
+        .calc-buttons button.equals { background-color: #28a745; color: white; grid-column: span 2; }
+        .calc-buttons button.equals:hover { background-color: #218838; }
+        .calc-buttons button.clear { background-color: #dc3545; color: white;}
+        .calc-buttons button.clear:hover { background-color: #c82333; }
+
+        /* Styles for Adsterra Native Banner container if needed */
+        .native-ad-container {
+            margin-top: 20px; /* Add some space above the ad */
+            padding: 0 20px; /* Match page padding if ad is inside pages */
+            text-align: center; /* Center the ad container if it's block */
+        }
+    </style>
+</head>
+<body>
+    <div class="app-shell">
+        <div class="app-header">
+            <button class="back-to-home" style="display:none;">হোম</button>
+            <span id="appTitle">অ্যাপ হাব</span>
+        </div>
+
+        <!-- Home Page -->
+        <div id="homePage" class="page active-page">
+            <h2>অনুগ্রহ করে একটি অ্যাপ নির্বাচন করুন:</h2>
+            <div class="app-launcher">
+                <button data-target="notepadPage" data-title="নোটপ্যাড">নোটপ্যাড</button>
+                <button data-target="calendarPage" data-title="ক্যালেন্ডার">ক্যালেন্ডার</button>
+                <button data-target="calculatorPage" data-title="ক্যালকুলেটর">ক্যালকুলেটর</button>
+            </div>
+        </div>
+
+        <!-- Notepad Page -->
+        <div id="notepadPage" class="page">
+            <h3>নতুন নোট / সম্পাদনা</h3>
+            <input type="text" id="notepadTitleInput" placeholder="নোটের শিরোনাম...">
+            <textarea id="notepadContentInput" placeholder="এখানে আপনার নোট লিখুন..."></textarea>
+            <div class="button-group">
+                <button id="notepadSaveBtn" class="primary-btn">নোট সংরক্ষণ করুন</button>
+                <button id="notepadCancelEditBtn" class="secondary-btn" style="display:none;">বাতিল করুন</button>
+            </div>
+            <h3>সংরক্ষিত নোটসমূহ</h3>
+            <input type="text" id="notepadSearchInput" placeholder="নোট খুঁজুন...">
+            <div id="notepadNotesContainer"></div>
+        </div>
+
+        <!-- Calendar Page -->
+        <div id="calendarPage" class="page">
+            <div class="calendar-controls">
+                <button id="calendarPrevMonthBtn" class="primary-btn">পূর্ববর্তী মাস</button>
+                <h3 id="calendarCurrentMonthYearDisplay"></h3>
+                <button id="calendarNextMonthBtn" class="primary-btn">পরবর্তী মাস</button>
+            </div>
+            <table id="calendarTable">
+                <thead>
+                    <tr>
+                        <th>রবি</th><th>সোম</th><th>মঙ্গল</th><th>বুধ</th><th>বৃহঃ</th><th>শুক্র</th><th>শনি</th>
+                    </tr>
+                </thead>
+                <tbody id="calendarBody"></tbody>
+            </table>
+        </div>
+
+        <!-- Calculator Page -->
+        <div id="calculatorPage" class="page">
+             <div class="calculator">
+                <input type="text" id="calculatorDisplay" value="0" readonly>
+                <div class="calc-buttons">
+                    <button class="calc-btn clear" data-value="AC">AC</button>
+                    <button class="calc-btn operator" data-value="DEL">DEL</button>
+                    <button class="calc-btn operator" data-value="%">%</button>
+                    <button class="calc-btn operator" data-value="/">÷</button>
+
+                    <button class="calc-btn" data-value="7">7</button>
+                    <button class="calc-btn" data-value="8">8</button>
+                    <button class="calc-btn" data-value="9">9</button>
+                    <button class="calc-btn operator" data-value="*">×</button>
+
+                    <button class="calc-btn" data-value="4">4</button>
+                    <button class="calc-btn" data-value="5">5</button>
+                    <button class="calc-btn" data-value="6">6</button>
+                    <button class="calc-btn operator" data-value="-">−</button>
+
+                    <button class="calc-btn" data-value="1">1</button>
+                    <button class="calc-btn" data-value="2">2</button>
+                    <button class="calc-btn" data-value="3">3</button>
+                    <button class="calc-btn operator" data-value="+">+</button>
+
+                    <button class="calc-btn" data-value="00">00</button>
+                    <button class="calc-btn" data-value="0">0</button>
+                    <button class="calc-btn" data-value=".">.</button>
+                    <button class="calc-btn equals" data-value="=">=</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Adsterra Native Banner Code Start -->
+        <div class="native-ad-container">
+            <script async="async" data-cfasync="false" src="//pl26765660.profitableratecpm.com/5dee9cf8a0adb6f7e4b0e84885ce2af5/invoke.js"></script>
+            <div id="container-5dee9cf8a0adb6f7e4b0e84885ce2af5"></div>
+        </div>
+        <!-- Adsterra Native Banner Code End -->
+
+    </div> <!-- Closing app-shell -->
+
+    <script>
+        // alert('Script execution started.'); // ডিবাগিং এর জন্য: আনকমেন্ট করে দেখুন
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // alert('DOMContentLoaded event fired.'); // ডিবাগিং এর জন্য: আনকমেন্ট করে দেখুন
+
+            const pages = document.querySelectorAll('.page');
+            const appLauncherButtons = document.querySelectorAll('.app-launcher button');
+            const backToHomeBtn = document.querySelector('.back-to-home');
+            const appTitleElement = document.getElementById('appTitle');
+
+            function showPage(pageId, title) {
+                pages.forEach(page => {
+                    page.classList.remove('active-page');
+                });
+                const targetPage = document.getElementById(pageId);
+                if (targetPage) {
+                    targetPage.classList.add('active-page');
+                    appTitleElement.textContent = title;
+                    backToHomeBtn.style.display = (pageId === 'homePage') ? 'none' : 'inline-block';
+                    if (typeof window.scrollTo === 'function') { // ensure scrollTo exists
+                        window.scrollTo(0, 0);
+                    }
+                }
+            }
+
+            appLauncherButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    const targetPageId = button.dataset.target;
+                    const targetTitle = button.dataset.title;
+                    showPage(targetPageId, targetTitle);
+                });
+            });
+
+            backToHomeBtn.addEventListener('click', () => {
+                showPage('homePage', 'অ্যাপ হাব');
+            });
+
+            showPage('homePage', 'অ্যাপ হাব');
+
+            // --- Notepad Functionality ---
+            const notepadTitleInput = document.getElementById('notepadTitleInput');
+            const notepadContentInput = document.getElementById('notepadContentInput');
+            const notepadSaveBtn = document.getElementById('notepadSaveBtn');
+            const notepadCancelEditBtn = document.getElementById('notepadCancelEditBtn');
+            const notepadNotesContainer = document.getElementById('notepadNotesContainer');
+            const notepadSearchInput = document.getElementById('notepadSearchInput');
+            let notepadEditingNoteId = null;
+            const notepadLocalStorageKey = 'multiApp_notepad_notes_v3'; // Changed key for safety
+
+            function loadNotepadNotes() { displayNotepadNotes(); }
+            
+            if(notepadSaveBtn) notepadSaveBtn.addEventListener('click', handleSaveNotepadNote);
+            if(notepadCancelEditBtn) notepadCancelEditBtn.addEventListener('click', resetNotepadForm);
+            if(notepadSearchInput) notepadSearchInput.addEventListener('input', displayNotepadNotes);
+
+            function resetNotepadForm() {
+                if(notepadTitleInput) notepadTitleInput.value = '';
+                if(notepadContentInput) notepadContentInput.value = '';
+                notepadEditingNoteId = null;
+                if(notepadSaveBtn) notepadSaveBtn.textContent = 'নোট সংরক্ষণ করুন';
+                if(notepadCancelEditBtn) notepadCancelEditBtn.style.display = 'none';
+                if(notepadTitleInput) notepadTitleInput.focus();
+            }
+
+            function getNotepadTimestamp() {
+                return new Date().toLocaleString('bn-BD', {
+                    year: 'numeric', month: 'long', day: 'numeric',
+                    hour: 'numeric', minute: 'numeric', hour12: true
+                });
+            }
+
+            function handleSaveNotepadNote() {
+                if (!notepadTitleInput || !notepadContentInput) return;
+                const title = notepadTitleInput.value.trim();
+                const content = notepadContentInput.value.trim();
+                if (!content) {
+                    alert('দয়া করে নোটের বিষয়বস্তু লিখুন!');
+                    return;
+                }
+                const noteTitle = title || `নোট (${new Date().toLocaleDateString('bn-BD')})`;
+
+                if (notepadEditingNoteId !== null) {
+                    updateNotepadNote(notepadEditingNoteId, noteTitle, content);
+                } else {
+                    addNotepadNote(noteTitle, content);
+                }
+                resetNotepadForm();
+            }
+
+            function addNotepadNote(title, content) {
+                const notes = getNotepadNotesFromStorage();
+                const newNote = { id: Date.now(), title, content, timestamp: getNotepadTimestamp() };
+                notes.unshift(newNote);
+                saveNotepadNotesToStorage(notes);
+                displayNotepadNotes();
+            }
+
+            function updateNotepadNote(id, newTitle, newContent) {
+                let notes = getNotepadNotesFromStorage();
+                notes = notes.map(note => (note.id === id) ?
+                    { ...note, title: newTitle, content: newContent, timestamp: getNotepadTimestamp() } : note);
+                saveNotepadNotesToStorage(notes);
+                displayNotepadNotes();
+            }
+
+            function startEditNotepadNote(noteToEdit) {
+                if (!notepadTitleInput || !notepadContentInput || !notepadSaveBtn || !notepadCancelEditBtn) return;
+                notepadTitleInput.value = noteToEdit.title;
+                notepadContentInput.value = noteToEdit.content;
+                notepadEditingNoteId = noteToEdit.id;
+                notepadSaveBtn.textContent = 'আপডেট করুন';
+                notepadCancelEditBtn.style.display = 'inline-block';
+                notepadTitleInput.focus();
+                const notepadPageEl = document.getElementById('notepadPage');
+                if(notepadPageEl && typeof notepadPageEl.scrollTop !== 'undefined') notepadPageEl.scrollTop = 0;
+            }
+
+            function displayNotepadNotes() {
+                if (!notepadNotesContainer || !notepadSearchInput) return;
+                notepadNotesContainer.innerHTML = '';
+                const allNotes = getNotepadNotesFromStorage();
+                const searchTerm = notepadSearchInput.value.toLowerCase().trim();
+                const filteredNotes = allNotes.filter(note =>
+                    (note.title && note.title.toLowerCase().includes(searchTerm)) ||
+                    (note.content && note.content.toLowerCase().includes(searchTerm))
+                );
+
+                if (filteredNotes.length === 0) {
+                    notepadNotesContainer.innerHTML = allNotes.length === 0 ?
+                        '<p class="empty-message">এখনও কোনো নোট সংরক্ষণ করা হয়নি।</p>' :
+                        '<p class="no-results-message">আপনার সার্চের সাথে মেলে এমন কোনো নোট পাওয়া যায়নি।</p>';
+                    return;
+                }
+
+                filteredNotes.forEach(note => {
+                    const noteEl = document.createElement('div');
+                    noteEl.className = 'note-item';
+                    
+                    const titleEl = document.createElement('h4');
+                    titleEl.className = 'note-title';
+                    titleEl.textContent = note.title;
+
+                    const contentEl = document.createElement('p');
+                    contentEl.className = 'note-content';
+                    contentEl.textContent = note.content;
+
+                    const timestampEl = document.createElement('span');
+                    timestampEl.className = 'timestamp';
+                    timestampEl.textContent = `সংরক্ষণের সময়: ${note.timestamp}`;
+
+                    const actionsEl = document.createElement('div');
+                    actionsEl.className = 'note-actions';
+                    actionsEl.innerHTML = `
+                        <button class="warning-btn edit-note-btn" data-id="${note.id}">সম্পাদনা</button>
+                        <button class="danger-btn delete-note-btn" data-id="${note.id}">মুছুন</button>
+                    `;
+                    noteEl.appendChild(titleEl);
+                    noteEl.appendChild(contentEl);
+                    noteEl.appendChild(timestampEl);
+                    noteEl.appendChild(actionsEl);
+                    notepadNotesContainer.appendChild(noteEl);
+                });
+
+                document.querySelectorAll('.edit-note-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const noteId = parseInt(e.target.dataset.id);
+                        const noteToEdit = getNotepadNotesFromStorage().find(n => n.id === noteId);
+                        if (noteToEdit) startEditNotepadNote(noteToEdit);
+                    });
+                });
+                document.querySelectorAll('.delete-note-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        if (confirm('আপনি কি নিশ্চিতভাবে এই নোটটি মুছতে চান?')) {
+                            deleteNotepadNote(parseInt(e.target.dataset.id));
+                        }
+                    });
+                });
+            }
+
+            function deleteNotepadNote(noteId) {
+                let notes = getNotepadNotesFromStorage();
+                notes = notes.filter(note => note.id !== noteId);
+                saveNotepadNotesToStorage(notes);
+                displayNotepadNotes();
+                if (notepadEditingNoteId === noteId) resetNotepadForm();
+            }
+
+            function getNotepadNotesFromStorage() {
+                try {
+                    const notes = localStorage.getItem(notepadLocalStorageKey);
+                    return notes ? JSON.parse(notes) : [];
+                } catch (e) {
+                    console.error("Error reading from localStorage:", e);
+                    // alert("নোট লোড করতে সমস্যা হচ্ছে। ব্রাউজার লোকাল স্টোরেজ সমর্থন করছে না বা অক্ষম করা আছে।");
+                    return [];
+                }
+            }
+            function saveNotepadNotesToStorage(notes) {
+                try {
+                    localStorage.setItem(notepadLocalStorageKey, JSON.stringify(notes));
+                } catch (e) {
+                    console.error("Error writing to localStorage:", e);
+                    // alert("নোট সংরক্ষণ করতে সমস্যা হচ্ছে। ব্রাউজার লোকাল স্টোরেজ সমর্থন করছে না বা পূর্ণ হয়ে গেছে।");
+                }
+            }
+            if (document.getElementById('notepadPage')) { loadNotepadNotes(); }
+
+            // --- Calendar Functionality ---
+            const calendarBody = document.getElementById('calendarBody');
+            const calendarCurrentMonthYearDisplay = document.getElementById('calendarCurrentMonthYearDisplay');
+            const calendarPrevMonthBtn = document.getElementById('calendarPrevMonthBtn');
+            const calendarNextMonthBtn = document.getElementById('calendarNextMonthBtn');
+            let calendarCurrentDate = new Date();
+
+            function renderCalendar(date) {
+                if (!calendarBody || !calendarCurrentMonthYearDisplay) return;
+                calendarBody.innerHTML = '';
+                const year = date.getFullYear();
+                const month = date.getMonth();
+
+                const monthNamesBn = ["জানুয়ারি", "ফেব্রুয়ারি", "মার্চ", "এপ্রিল", "মে", "জুন", "জুলাই", "আগস্ট", "সেপ্টেম্বর", "অক্টোবর", "নভেম্বর", "ডিসেম্বর"];
+                calendarCurrentMonthYearDisplay.textContent = `${monthNamesBn[month]} ${year.toString().split('').map(n => String.fromCharCode(0x09E6 + parseInt(n))).join('')}`; // Convert year to Bangla digits
+
+                const firstDayOfMonth = new Date(year, month, 1).getDay();
+                const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+                let dateCounter = 1;
+                for (let i = 0; i < 6; i++) {
+                    const row = document.createElement('tr');
+                    for (let j = 0; j < 7; j++) {
+                        const cell = document.createElement('td');
+                        if (i === 0 && j < firstDayOfMonth) {
+                            cell.classList.add('empty');
+                        } else if (dateCounter > daysInMonth) {
+                            cell.classList.add('empty');
+                        } else {
+                            cell.textContent = dateCounter.toString().split('').map(n => String.fromCharCode(0x09E6 + parseInt(n))).join(''); // Convert date to Bangla digits
+                            const today = new Date();
+                            if (dateCounter === today.getDate() && month === today.getMonth() && year === today.getFullYear()) {
+                                cell.classList.add('today');
+                            }
+                            dateCounter++;
+                        }
+                        row.appendChild(cell);
+                    }
+                    calendarBody.appendChild(row);
+                    if (dateCounter > daysInMonth && i < 5 && calendarBody.querySelectorAll('td:not(.empty)').length >= daysInMonth) break;
+                }
+            }
+
+            if (calendarPrevMonthBtn) {
+                calendarPrevMonthBtn.addEventListener('click', () => {
+                    calendarCurrentDate.setMonth(calendarCurrentDate.getMonth() - 1);
+                    renderCalendar(calendarCurrentDate);
+                });
+            }
+            if (calendarNextMonthBtn) {
+                calendarNextMonthBtn.addEventListener('click', () => {
+                    calendarCurrentDate.setMonth(calendarCurrentDate.getMonth() + 1);
+                    renderCalendar(calendarCurrentDate);
+                });
+            }
+            if (document.getElementById('calendarPage')) { renderCalendar(calendarCurrentDate); }
+
+            // --- Calculator Functionality ---
+            const calculatorDisplay = document.getElementById('calculatorDisplay');
+            const calcButtons = document.querySelectorAll('#calculatorPage .calc-btn');
+            let calcCurrentInput = '0'; // Initialize with '0'
+            let calcOperator = '';
+            let calcPreviousInput = '';
+            let calcShouldResetDisplay = true; // Start by resetting so first number replaces '0'
+
+            function updateCalculatorDisplay() {
+                if (!calculatorDisplay) return;
+                calculatorDisplay.value = calcCurrentInput || calcPreviousInput || '0';
+            }
+
+            calcButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    if (!calculatorDisplay) return;
+                    const value = button.dataset.value;
+
+                    if (value === 'AC') {
+                        calcCurrentInput = '0';
+                        calcOperator = '';
+                        calcPreviousInput = '';
+                        calcShouldResetDisplay = true;
+                    } else if (value === 'DEL') {
+                        if (calcCurrentInput.length > 1) {
+                            calcCurrentInput = calcCurrentInput.slice(0, -1);
+                        } else {
+                            calcCurrentInput = '0'; // If only one digit (or empty), reset to '0'
+                            calcShouldResetDisplay = true;
+                        }
+                    } else if (!isNaN(parseFloat(value)) || value === '.' || value === '00') {
+                        if (calcShouldResetDisplay || calcCurrentInput === '0' && value !== '.') {
+                            calcCurrentInput = (value === '.') ? '0.' : value; // if starting with dot, make it "0."
+                            calcShouldResetDisplay = false;
+                        } else {
+                            if (value === '.' && calcCurrentInput.includes('.')) return;
+                            calcCurrentInput += value;
+                        }
+                         // Remove leading zero if not followed by a dot, e.g. "07" becomes "7"
+                        if (calcCurrentInput.length > 1 && calcCurrentInput.startsWith('0') && !calcCurrentInput.startsWith('0.')) {
+                            calcCurrentInput = calcCurrentInput.substring(1);
+                        }
+
+                    } else if (button.classList.contains('operator') && value !== '%') { // Standard operators
+                        if (calcCurrentInput === '' && calcPreviousInput === '') return;
+                        if (calcOperator && calcPreviousInput !== '' && calcCurrentInput !== '' && !calcShouldResetDisplay) {
+                            performCalculation();
+                        }
+                        calcOperator = value;
+                        if (calcCurrentInput !== '') {
+                           calcPreviousInput = calcCurrentInput;
+                        }
+                        calcCurrentInput = ''; // Ready for new input
+                        calcShouldResetDisplay = false;
+
+                    } else if (value === '%') {
+                        if(calcCurrentInput !== '' && calcCurrentInput !== '0') {
+                            let current = parseFloat(calcCurrentInput);
+                            calcCurrentInput = (current / 100).toString();
+                            // Optionally, if an operator and previous input exist, calculate percentage of previous
+                            // e.g., 50 + 10% (of 50)
+                            if(calcOperator && calcPreviousInput !== '') {
+                                let prev = parseFloat(calcPreviousInput);
+                                let percentageOfPrev = prev * (current / 100);
+                                calcCurrentInput = percentageOfPrev.toString();
+                                // You might want to perform the operation (e.g. prev + percentageOfPrev) here directly
+                                // or set it up for the '=' button. For simplicity, just showing the percentage value for now.
+                            }
+                        }
+                    }
+                    else if (value === '=') {
+                        performCalculation();
+                        calcOperator = '';
+                        calcShouldResetDisplay = true;
+                    }
+                    updateCalculatorDisplay();
+                });
+            });
+
+            function performCalculation() {
+                if (calcOperator === '' || calcPreviousInput === '') {
+                    // If only current input exists and '=' is pressed, do nothing or treat current input as result.
+                    // For now, we require previousInput and operator.
+                    if(calcCurrentInput !== '' && calcCurrentInput !== '0' && calcPreviousInput === '') {
+                        // calcPreviousInput = calcCurrentInput; // or simply return
+                        return;
+                    } else if (calcCurrentInput === '' || calcCurrentInput === '0') {
+                         return;
+                    }
+                }
+                
+                const currentVal = calcCurrentInput || calcPreviousInput; // Use currentInput, fallback to prev (e.g. 5 * =)
+                if (currentVal === '') return;
+
+                let prev = parseFloat(calcPreviousInput);
+                let current = parseFloat(currentVal);
+                let result;
+
+                if (isNaN(prev) || isNaN(current)) {
+                    calcCurrentInput = 'ত্রুটি'; calcPreviousInput = ''; calcOperator = '';
+                    calcShouldResetDisplay = true;
+                    updateCalculatorDisplay();
+                    return;
+                }
+
+                switch (calcOperator) {
+                    case '+': result = prev + current; break;
+                    case '-': result = prev - current; break;
+                    case '*': result = prev * current; break;
+                    case '/':
+                        if (current === 0) {
+                            calcCurrentInput = 'ত্রুটি'; calcPreviousInput = ''; calcOperator = '';
+                            calcShouldResetDisplay = true;
+                            updateCalculatorDisplay(); return;
+                        }
+                        result = prev / current;
+                        break;
+                    // '%' is handled directly on button click for immediate feedback, or can be complex here
+                    default: return;
+                }
+                result = parseFloat(result.toFixed(10));
+                calcCurrentInput = result.toString();
+                calcPreviousInput = ''; // Result is now in currentInput
+                // calcOperator = ''; // Usually clear operator after equals, unless for chained operations like 5 * 2 = 10 + 3 = 13
+                calcShouldResetDisplay = true; // Next number should overwrite the result
+            }
+            if (document.getElementById('calculatorPage')) { updateCalculatorDisplay(); }
+        });
+    </script>
+
+    <!-- Adsterra Social Bar Code Start -->
+    <script type='text/javascript' src='//pl26765677.profitableratecpm.com/94/2c/05/942c05a0f6db50c026c6ac6b220e844d.js'></script>
+    <!-- Adsterra Social Bar Code End -->
+</body>
+</html>
